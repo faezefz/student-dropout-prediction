@@ -3,7 +3,6 @@ import pandas as pd
 
 def clean_column_names(df):
     """Convert column names to snake_case and fix typos."""
-    df = df.copy()
     df.columns = (
         df.columns
         .str.strip()
@@ -30,3 +29,8 @@ def load_data(path):
     df_enrolled = df[df["target"] == "Enrolled"].copy()
 
     return df_model, df_enrolled
+
+
+if __name__ == "__main__":
+    df_model, df_enrolled = load_data("data/data.csv")
+    print(df_model.shape, df_enrolled.shape)
