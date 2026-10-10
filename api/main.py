@@ -1,6 +1,9 @@
 import joblib
 from fastapi import FastAPI
 
+from api.schemas import StudentData
+import pandas as pd
+
 MODEL_PATH = "models/model.joblib"
 
 app = FastAPI(
@@ -17,3 +20,13 @@ threshold = bundle["threshold"]
 @app.get("/health")
 def health():
     return {"status": "ok", "threshold": threshold}
+
+@app.post("/predict")
+def predict(student: StudentData):
+    df = pd.DataFrame([student.model_dump()])
+    proba = model.predict_proba(df)[0,1]
+
+    return {
+        "dropout_probability": round(float(proba), 3),
+        "at_risk": bool(proba >= threshold),
+    }
