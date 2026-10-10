@@ -5,3 +5,5 @@ matplotlib
 seaborn
 jupyter
 mlflow
+fastapi
+uvicorn
