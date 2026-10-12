@@ -1,6 +1,8 @@
 import sys
 from pathlib import Path
 
+import matplotlib.pyplot as plt
+
 import pandas as pd
 import streamlit as st
 from sklearn.model_selection import train_test_split
@@ -11,6 +13,7 @@ sys.path.append(str(ROOT))
 from src.data import load_data  # noqa: E402
 from src.features import get_X_y  # noqa: E402
 from src.model import RANDOM_STATE, THRESHOLD, build_model  # noqa: E402
+from src.explain import ModelExplainer  # noqa: E402
 
 BASE_STUDENT = {
     "marital_status": 1.0,
@@ -46,7 +49,7 @@ BASE_STUDENT = {
 
 
 @st.cache_resource
-def get_model():
+def get_model_and_explainer():
     df_model, _ = load_data(ROOT / "data" / "data.csv")
     X, y = get_X_y(df_model)
     X_train, _, y_train, _ = train_test_split(
@@ -54,10 +57,11 @@ def get_model():
     )
     model = build_model()
     model.fit(X_train, y_train)
-    return model
+    explainer = ModelExplainer(model, X_train)
+    return model, explainer
 
 
-model = get_model()
+model, explainer = get_model_and_explainer()
 
 st.title("🎓 Student Dropout Risk Predictor")
 st.write(
@@ -93,11 +97,37 @@ student.update({
     "curricular_units_1st_sem_grade": average_grade,
     "admission_grade": admission_grade
 })
-       
-proba = model.predict_proba(pd.DataFrame([student]))[0, 1]
+
+student_df = pd.DataFrame([student])     
+proba = model.predict_proba(student_df)[0, 1]
 
 st.metric("Dropout probability", f"{proba:.1%}")
 if proba >= THRESHOLD:
     st.error("⚠️ At risk of dropping out")
 else:
     st.success("✅ Not at risk")
+
+st.subheader("Why this prediction?")
+
+contributions = explainer.explain(student_df)
+top = contributions.reindex(
+    contributions.abs().sort_values(ascending=False).index
+).head(8)[::-1]
+
+labels = (
+    top.index
+    .str.replace("curricular_units_1st_sem_", "1st sem: ")
+    .str.replace("_", " ")
+)
+colors = ["#d62728" if v > 0 else "#2ca02c" for v in top.values]
+
+fig, ax = plt.subplots(figsize=(7, 4))
+ax.barh(labels, top.values, color=colors)
+ax.axvline(0, color="gray", linewidth=0.8)
+ax.set_xlabel("<- lowers risk           raises risk ->")
+st.pyplot(fig)
+
+st.caption(
+    "Red bars push the prediction towards dropout, while green bars push it towards graduation."
+    "Values are SHAP contributions to the log-odds, compared to an average student."
+)
