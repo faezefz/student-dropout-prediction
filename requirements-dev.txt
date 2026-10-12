@@ -4,4 +4,4 @@ matplotlib
 seaborn
 pytest
 httpx
-gradio
+strimlit

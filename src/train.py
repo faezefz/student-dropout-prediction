@@ -2,26 +2,16 @@ from pathlib import Path
 
 import joblib
 import mlflow
-from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import accuracy_score, f1_score, precision_score, recall_score
 from sklearn.model_selection import train_test_split
-from sklearn.pipeline import Pipeline
+from src.model import RANDOM_STATE, THRESHOLD, build_model
+
 
 from src.data import load_data
-from src.features import build_preprocessor, get_X_y
+from src.features import get_X_y
 
 DATA_PATH = "data/data.csv"
 MODEL_PATH = Path("models/model.joblib")
-THRESHOLD = 0.3
-RANDOM_STATE = 42
-
-
-def build_model():
-    """Create the full pipeline: preprocessing + classifier."""
-    return Pipeline(steps=[
-        ("preprocessor", build_preprocessor()),
-        ("classifier", LogisticRegression(max_iter=1000)),
-    ])
 
 
 def evaluate(model, X_test, y_test, threshold):
