@@ -2,3 +2,5 @@
 jupyter
 matplotlib
 seaborn
+pytest
+httpx
