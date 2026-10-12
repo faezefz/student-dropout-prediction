@@ -1,0 +1,4 @@
+-r requirments.txt
+jupyter
+matplotlib
+seaborn
